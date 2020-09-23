@@ -127,3 +127,10 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Pipenv
+Pipfile.lock
+
+# Datafiles
+*.json
+*.csv
