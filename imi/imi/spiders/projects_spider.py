@@ -10,6 +10,14 @@ from imi.items import ProjectItem
 logger = logging.getLogger()
 
 
+def remove_html_tags(text):
+    """Remove html tags from a string"""
+    clean = re.compile('<.*?>')
+    text = re.sub(clean, '', text)
+    text = re.sub(re.compile(r'\n'), ' ', text)
+    return text.strip()
+
+
 class CallsSpider(CrawlSpider):
     name = 'projects'
     allowed_domains = ['imi.europa.eu']
@@ -36,17 +44,18 @@ class CallsSpider(CrawlSpider):
         i['status'] = response.xpath('//span[@class="project-status"]/text()').extract_first()
         i['program'] = response.xpath('//span[@class="project-imi-programme"]/text()').extract_first()
         i['disease_area'] = response.xpath('//div[@id="project-tags"]//a[@class="project-keyword"]/text()').getall()
-        i['products'] = ''
-        i['tools'] = ''
-        i['imi_funding'] = response.xpath('///div[contains(@class, "field--name-field-funding-imi")]/@content').extract_first()
-        i['efpia_inkind'] = response.xpath('///div[contains(@class, "field--name-field-funding-efpi")]/@content').extract_first()
-        i['other'] = response.xpath('///div[contains(@class, "field--name-field-funding-other")]/@content').extract_first()
+        i['imi_funding'] = response.xpath('//div[contains(@class, "field--name-field-funding-imi")]/@content').extract_first()
+        i['efpia_inkind'] = response.xpath('//div[contains(@class, "field--name-field-funding-efpi")]/@content').extract_first()
+        i['other'] = response.xpath('//div[contains(@class, "field--name-field-funding-other")]/@content').extract_first()
         i['project_intro'] = response.xpath('//article/div/div[2]/div[2]/div[1]/div/div[1]/div/text()').extract_first()
         i['project_website'] = response.xpath('//article/div/div[2]/div[1]/div[3]/div/p[1]/a/text()').extract_first()
         i['twitter_handle'] = response.xpath('//article/div/div[2]/div[1]/div[3]/div/p[2]/a/text()').extract_first()
-        i['project_leader'] = ''
-        i['project_coordinator'] = ''
-        i['project_management'] = ''
+        i['project_coordinator'] = response.xpath('//div[@id="project-contacts"]/div/div[@class="field--item"]/div[@class="project-contact"][contains(strong, "Project coordinator")]/text()').extract()
+        i['project_leader'] = response.xpath('//div[@id="project-contacts"]/div/div[@class="field--item"]/div[@class="project-contact"][contains(strong, "Project leader")]/text()').extract()
+        i['project_manager'] = response.xpath('//div[@id="project-contacts"]/div/div[@class="field--item"]/div[@class="project-contact"][contains(strong, "Project Manager")]/text()').extract()
         i['url'] = response.url
+        i['summary'] = remove_html_tags(response.xpath('//*[@id="project-body"]/div/*').extract()[0])
+        i['fundings'] = response.xpath('//article/div/div[2]/div[2]/div[4]/div[2]/div[2]/div/div/div[2]/div/div/table/tbody/*').extract()
+        i['participants'] = response.xpath('//div[@class="project-participants-category"]/*').extract()
         logger.info('Got item %s', i)
         yield i
