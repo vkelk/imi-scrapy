@@ -40,10 +40,11 @@ class CallsSpider(CrawlSpider):
         i['start_date'] = response.xpath('//article/div/div[2]/div[1]/div[2]/div/table[1]/tbody/tr[1]/td[2]/div/time/text()').extract_first()
         i['end_date'] = response.xpath('//article/div/div[2]/div[1]/div[2]/div/table[1]/tbody/tr[2]/td[2]/div/time/text()').extract_first()
         i['call_id'] = response.xpath('//article/div/div[2]/div[1]/div[2]/div/table[1]/tbody/tr[3]/td[2]/div/text()').extract_first()
-        i['call_date'] = ''
         i['status'] = response.xpath('//span[@class="project-status"]/text()').extract_first()
         i['program'] = response.xpath('//span[@class="project-imi-programme"]/text()').extract_first()
-        i['disease_area'] = response.xpath('//div[@id="project-tags"]//a[@class="project-keyword"]/text()').getall()
+        i['disease_area'] = response.xpath('//div[@id="project-tags"]//a[@class="project-keyword"][contains(@href, "disease_areas")]/text()').getall()
+        i['products'] = response.xpath('//div[@id="project-tags"]//a[@class="project-keyword"][contains(@href, "products")]/text()').getall()
+        i['tools'] = response.xpath('//div[@id="project-tags"]//a[@class="project-keyword"][contains(@href, "tools")]/text()').getall()
         i['imi_funding'] = response.xpath('//div[contains(@class, "field--name-field-funding-imi")]/@content').extract_first()
         i['efpia_inkind'] = response.xpath('//div[contains(@class, "field--name-field-funding-efpi")]/@content').extract_first()
         i['other'] = response.xpath('//div[contains(@class, "field--name-field-funding-other")]/@content').extract_first()
