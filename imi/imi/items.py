@@ -15,6 +15,8 @@ class CallItem(scrapy.Item):
     publication_date = scrapy.Field()
     sub_start_date = scrapy.Field()
     sub_end_date = scrapy.Field()
+    call_date = scrapy.Field()
+    url = scrapy.Field()
 
 
 class ProjectItem(scrapy.Item):
