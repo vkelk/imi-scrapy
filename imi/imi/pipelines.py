@@ -1,6 +1,7 @@
 from datetime import datetime
 import logging
 import os
+import re
 
 import psycopg2
 import psycopg2.extras
@@ -12,6 +13,14 @@ DB_HOST = os.environ.get('DB_HOST', '127.0.0.1')
 DB_PORT = os.environ.get('DB_PORT', 5432)
 DB_NAME = os.environ.get('DB_NAME', 'postgres')
 DB_SCHEMA = os.environ.get('DB_SCHEMA', 'imi')
+
+
+def remove_html_tags(text):
+    """Remove html tags from a string"""
+    clean = re.compile('<.*?>')
+    text = re.sub(clean, '', text)
+    text = re.sub(re.compile(r'\n'), ' ', text)
+    return text.strip()
 
 
 class ImiPipeline:
@@ -48,7 +57,7 @@ class DatabasePipeline(object):
             cur.execute(q, (item['gan'], ))
             result = cur.fetchone()
             self.cnx.commit()
-        except psycopg2.Error as err:
+        except Exception as err:
             self.logger.error(err)
         finally:
             cur.close()
@@ -85,7 +94,7 @@ class DatabasePipeline(object):
                 last_row = cur.fetchone()
                 self.cnx.commit()
                 result = last_row['gan']
-            except psycopg2.Error as err:
+            except Exception as err:
                 self.logger.error(err)
                 self.cnx.rollback()
                 result = None
@@ -96,14 +105,20 @@ class DatabasePipeline(object):
 
     def process_fundings(self, item):
         for funding in item['fundings']:
-            q = "INSERT INTO imi.fundings (gan, raw_text) VALUES(%s, %s) RETURNING id;"
+            funding_list = funding.split('</td>')
+            funding_list = [remove_html_tags(t) for t in funding_list]
+            if len(funding_list) >= 2:
+                funding_list[1] = funding_list[1].replace(' ', '')
+            if len(funding_list) == 3:
+                funding_list.pop()
+            q = 'INSERT INTO imi.fundings ("name", funding, gan, raw_text) VALUES(%s, %s, %s, %s) RETURNING id;'
             try:
                 cur = self.cnx.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-                cur.execute(q, (item['gan'], funding))
+                cur.execute(q, (funding_list[0], funding_list[1], item['gan'], funding))
                 last_row = cur.fetchone()
                 self.cnx.commit()
                 result = last_row['id']
-            except psycopg2.Error as err:
+            except Exception as err:
                 self.logger.error(err)
                 self.cnx.rollback()
                 result = None
@@ -111,20 +126,46 @@ class DatabasePipeline(object):
                 cur.close()
 
     def process_participants(self, item):
-        for participant in item['participants']:
-            q = "INSERT INTO imi.participants (gan, raw_text) VALUES(%s, %s) RETURNING id;"
-            try:
-                cur = self.cnx.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-                cur.execute(q, (item['gan'], participant))
-                last_row = cur.fetchone()
-                self.cnx.commit()
-                result = last_row['id']
-            except psycopg2.Error as err:
-                self.logger.error(err)
-                self.cnx.rollback()
-                result = None
-            finally:
-                cur.close()
+        h5_elements = []
+        org_names = []
+        for entry in item['participants']:
+            if entry.startswith('<h5>'):
+                organization = remove_html_tags(entry)
+                if '(SMEs)' in organization:
+                    organization = 'SME'
+                elif 'public bodies' in organization:
+                    organization = 'Public Sector'
+                h5_elements.append(organization)
+            if entry.startswith('<ul>'):
+                li_elements = entry.split('</li>')
+                li_elements = [remove_html_tags(t) for t in li_elements]
+                li_elements.pop()
+                org_names.append(li_elements)
+        zip_iterator = zip(h5_elements, org_names)
+        collection = (list(zip_iterator))
+        for i, group in enumerate(collection):
+            org_type = group[0]
+            org_names = group[1]
+            for name_loc in org_names:
+                name_loc_list = name_loc.split(',')
+                if len(name_loc_list) == 3:
+                    q = 'INSERT INTO imi.participants (gan, "name", city, country, "type") VALUES(%s, %s, %s, %s, %s) RETURNING id;'
+                    values = (item['gan'], name_loc_list[0].strip(), name_loc_list[1].strip(), name_loc_list[2].strip(), org_type)
+                elif len(name_loc_list) == 4:
+                    q = 'INSERT INTO imi.participants (gan, "name", city, region, country, "type") VALUES(%s, %s, %s, %s, %s, %s) RETURNING id;'
+                    values = (item['gan'], name_loc_list[0].strip(), name_loc_list[1].strip(), name_loc_list[2].strip(), name_loc_list[3].strip(), org_type)
+                try:
+                    cur = self.cnx.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+                    cur.execute(q, values)
+                    last_row = cur.fetchone()
+                    self.cnx.commit()
+                    result = last_row['id']
+                except Exception as err:
+                    self.logger.error(err)
+                    self.cnx.rollback()
+                    result = None
+                finally:
+                    cur.close()
 
     def process_call(self, item):
         q = "SELECT id FROM imi.calls WHERE call_id = %s;"
@@ -133,7 +174,7 @@ class DatabasePipeline(object):
             cur.execute(q, (item['call_id'], ))
             result = cur.fetchone()
             self.cnx.commit()
-        except psycopg2.Error as err:
+        except Exception as err:
             self.logger.error(err)
         finally:
             cur.close()
@@ -154,7 +195,7 @@ class DatabasePipeline(object):
                 last_row = cur.fetchone()
                 self.cnx.commit()
                 result = last_row['id']
-            except psycopg2.Error as err:
+            except Exception as err:
                 self.logger.error(err)
                 self.cnx.rollback()
                 result = None
