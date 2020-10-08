@@ -23,11 +23,11 @@ pg_config = {
     'port': DB_PORT,
     'dbname': DB_NAME
 }
-stoplist = [r'the\b', r'\bltd\b', r'\binc\b', r'\bco\b', r'\bcorp\b', r'\bllc\b', r'\blp\b', r'\bbv\b', r'\bsrl\b',
-            r'\bsa\b', r'\bab\b']
-substitutions = json.load(open('nber_substitutions.json'))
-stoplist = [i[1].strip().lower() for i in substitutions]
-stoplist = set(stoplist)
+# stoplist = [r'the\b', r'\bltd\b', r'\binc\b', r'\bco\b', r'\bcorp\b', r'\bllc\b', r'\blp\b', r'\bbv\b', r'\bsrl\b',
+#             r'\bsa\b', r'\bab\b']
+# substitutions = json.load(open('nber_substitutions.json'))
+# stoplist = [i[1].strip().lower() for i in substitutions]
+# stoplist = set(stoplist)
 # print(stoplist)
 alphanumeric = re.compile(r'[a-zA-Z0-9& ]', re.UNICODE)
 terms = prepare_terms()
@@ -63,14 +63,14 @@ def process_participants():
         order by "name";
     """
     try:
-        cnx = psycopg2.connect(**pg_config)
-        cur = cnx.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cnx_imi = psycopg2.connect(**pg_config)
+        cur = cnx_imi.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute(f"SET SEARCH_PATH = {DB_SCHEMA}")
-        cnx.commit()
-        cur = cnx.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cnx_imi.commit()
+        cur = cnx_imi.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute(q)
         result = cur.fetchall()
-        cnx.commit()
+        cnx_imi.commit()
     except Exception as err:
         logger.error(err)
     finally:
