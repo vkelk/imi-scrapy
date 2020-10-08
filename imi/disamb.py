@@ -7,7 +7,6 @@ import os
 import re
 
 from cleanco import prepare_terms, basename
-import pandas as pd
 import psycopg2
 import psycopg2.extras
 
