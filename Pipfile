@@ -8,6 +8,7 @@ verify_ssl = true
 [packages]
 scrapy = "*"
 psycopg2-binary = "*"
+cleanco = {git = "https://github.com/vkelk/cleanco"}
 
 [requires]
 python_version = "3.7"

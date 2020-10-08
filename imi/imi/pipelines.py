@@ -106,7 +106,7 @@ class DatabasePipeline(object):
     def process_fundings(self, item):
         for funding in item['fundings']:
             funding_list = funding.split('</td>')
-            funding_list = [remove_html_tags(t) for t in funding_list]
+            funding_list = [remove_html_tags(t) for t in funding_list if 'Total Cost' not in t]
             if len(funding_list) >= 2:
                 funding_list[1] = funding_list[1].replace(' ', '')
             if len(funding_list) == 3:
