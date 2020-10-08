@@ -1,3 +1,4 @@
+import csv
 from datetime import datetime
 import json
 import logging
@@ -6,29 +7,37 @@ import os
 import re
 
 from cleanco import prepare_terms, basename
+import pandas as pd
 import psycopg2
 import psycopg2.extras
 
 
-DB_USER = os.environ.get('DB_USER', 'postgres')
-DB_PASS = os.environ.get('DB_PASS', '')
-DB_HOST = os.environ.get('DB_HOST', '127.0.0.1')
+DB_USER_IMI = os.environ.get('DB_USER_IMI', 'postgres')
+DB_PASS_IMI = os.environ.get('DB_PASS_IMI', '')
+DB_HOST_IMI = os.environ.get('DB_HOST_IMI', '127.0.0.1')
+DB_NAME_IMI = os.environ.get('DB_NAME_IMI', 'imi')
+DB_SCHEMA_IMI = os.environ.get('DB_SCHEMA_IMI', 'imi')
 DB_PORT = os.environ.get('DB_PORT', 5432)
-DB_NAME = os.environ.get('DB_NAME', 'postgres')
-DB_SCHEMA = os.environ.get('DB_SCHEMA', 'imi')
-pg_config = {
-    'user': DB_USER,
-    'password': DB_PASS,
-    'host': DB_HOST,
+DB_USER_PATENTS = os.environ.get('DB_USER_PATENTS', 'postgres')
+DB_PASS_PATENTS = os.environ.get('DB_PASS_PATENTS', '')
+DB_HOST_PATENTS = os.environ.get('DB_HOST_PATENTS', '127.0.0.1')
+DB_NAME_PATENTS = os.environ.get('DB_NAME_PATENTS', 'patentdata')
+DB_SCHEMA_GRANTS = os.environ.get('DB_SCHEMA_GRANTS', 'grants')
+DB_SCHEMA_APPLICATIONS = os.environ.get('DB_SCHEMA_APPLICATIONS', 'applications')
+pg_config_imi = {
+    'user': DB_USER_IMI,
+    'password': DB_PASS_IMI,
+    'host': DB_HOST_IMI,
     'port': DB_PORT,
-    'dbname': DB_NAME
+    'dbname': DB_NAME_IMI
 }
-# stoplist = [r'the\b', r'\bltd\b', r'\binc\b', r'\bco\b', r'\bcorp\b', r'\bllc\b', r'\blp\b', r'\bbv\b', r'\bsrl\b',
-#             r'\bsa\b', r'\bab\b']
-# substitutions = json.load(open('nber_substitutions.json'))
-# stoplist = [i[1].strip().lower() for i in substitutions]
-# stoplist = set(stoplist)
-# print(stoplist)
+pg_config_patents = {
+    'user': DB_USER_PATENTS,
+    'password': DB_PASS_PATENTS,
+    'host': DB_HOST_PATENTS,
+    'port': DB_PORT,
+    'dbname': DB_NAME_PATENTS
+}
 alphanumeric = re.compile(r'[a-zA-Z0-9& ]', re.UNICODE)
 terms = prepare_terms()
 
@@ -63,24 +72,101 @@ def process_participants():
         order by "name";
     """
     try:
-        cnx_imi = psycopg2.connect(**pg_config)
-        cur = cnx_imi.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute(f"SET SEARCH_PATH = {DB_SCHEMA}")
-        cnx_imi.commit()
-        cur = cnx_imi.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cnx = psycopg2.connect(**pg_config_imi)
+        cur = cnx.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(f"SET SEARCH_PATH = {DB_SCHEMA_IMI}")
+        cnx.commit()
+        cur = cnx.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute(q)
         result = cur.fetchall()
-        cnx_imi.commit()
+        cnx.commit()
     except Exception as err:
         logger.error(err)
     finally:
         cur.close()
-    if result is not None:
+        cnx.close()
+    with open('applications.csv', mode='w', newline='') as csv_file:
+        fieldnames = ['organization', 'year', 'count']
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames, dialect='excel')
+        writer.writeheader()
         for row in result:
-            # print(row['name'].split(' ')[-1])
-            # name = clean_name(row['name'])
             name = basename(row['name'], terms, prefix=False, middle=False, suffix=True)
-            print(row['name'], "|", name)
+            applications = find_applications(name)
+            if len(applications) > 0:
+                for application in applications:
+                    if application['count'] > 0:
+                        writer.writerow(application)
+                        print(f"Company name {name} / Patent Application {application}")
+    with open('grants.csv', mode='w', newline='') as csv_file:
+        fieldnames = ['organization', 'year', 'count']
+        writer = csv.DictWriter(csv_file, fieldnames=fieldnames, dialect='excel')
+        writer.writeheader()
+        for row in result:
+            name = basename(row['name'], terms, prefix=False, middle=False, suffix=True)
+            grants = find_grants(name)
+            if len(grants) > 0:
+                for grant in grants:
+                    if grant['count'] > 0:
+                        writer.writerow(grant)
+                        print(f"Company name {name} / Patent Grant {grant}")
+
+
+def find_grants(company_name):
+    company_name = f"%{company_name}%"
+    q = """
+        SELECT ass.organization, DATE_PART('year', p.date)::INTEGER as year, count(p.id)
+        FROM grants.assignee ass
+        left join grants.patent_assignee pass on pass.assignee_id = ass.id
+        left join grants.patent p on p.id = pass.patent_id
+        where ass.organization ilike %s
+        group by ass.organization, year
+        order by ass.organization, year;
+    """
+    result = []
+    try:
+        cnx = psycopg2.connect(**pg_config_patents)
+        cur = cnx.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(f"SET SEARCH_PATH = {DB_SCHEMA_GRANTS}")
+        cnx.commit()
+        cur = cnx.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(q, (company_name,))
+        result = cur.fetchall()
+        cnx.commit()
+    except Exception as err:
+        logger.error(err)
+    finally:
+        cur.close()
+        cnx.close()
+    return result
+
+
+def find_applications(company_name):
+    company_name = f"%{company_name}%"
+    q = """
+        SELECT ass.organization, DATE_PART('year', a.date_filed)::INTEGER as year, count(a.id)
+        FROM applications.assignee ass
+        left join applications.application_assignee aass on aass.assignee_id = ass.id
+        left join applications.application a on a.id = aass.application_id
+        where ass.organization ilike %s
+        group by ass.organization, year
+        order by ass.organization, year;
+    """
+    result = []
+    try:
+        cnx = psycopg2.connect(**pg_config_patents)
+        cur = cnx.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(f"SET SEARCH_PATH = {DB_SCHEMA_APPLICATIONS}")
+        cnx.commit()
+        cur = cnx.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(q, (company_name,))
+        result = cur.fetchall()
+        cnx.commit()
+    except Exception as err:
+        logger.error(err)
+    finally:
+        cur.close()
+        cnx.close()
+    return result
 
 
 if __name__ == '__main__':
