@@ -7,12 +7,12 @@ import psycopg2
 import psycopg2.extras
 
 
-DB_USER = os.environ.get('DB_USER', 'postgres')
-DB_PASS = os.environ.get('DB_PASS', '')
-DB_HOST = os.environ.get('DB_HOST', '127.0.0.1')
+DB_USER = os.environ.get('DB_USER_IMI', 'postgres')
+DB_PASS = os.environ.get('DB_PASS_IMI', '')
+DB_HOST = os.environ.get('DB_HOST_IMI', '127.0.0.1')
 DB_PORT = os.environ.get('DB_PORT', 5432)
-DB_NAME = os.environ.get('DB_NAME', 'postgres')
-DB_SCHEMA = os.environ.get('DB_SCHEMA', 'imi')
+DB_NAME = os.environ.get('DB_NAME_IMI', 'postgres')
+DB_SCHEMA = os.environ.get('DB_SCHEMA_IMI', 'imi')
 
 
 def remove_html_tags(text):
