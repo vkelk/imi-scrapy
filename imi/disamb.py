@@ -62,14 +62,15 @@ def clean_name(name):
 
 def process_participants():
     q = """
-        SELECT distinct("name")
+        SELECT distinct("name"), array_agg(gan) as gans
         FROM imi.participants
         where "type" not in ('Patient organisations')
         and "name" not ilike '%Univers%'
         and "name" not ilike '%Univerz%'
         and "name" not ilike '%College%'
+        group by "name"
         order by "name";
-    """
+        """
     try:
         cnx = psycopg2.connect(**pg_config_imi)
         cur = cnx.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
@@ -85,7 +86,7 @@ def process_participants():
         cur.close()
         cnx.close()
     with open('applications.csv', mode='w', newline='') as csv_file:
-        fieldnames = ['organization', 'year', 'count']
+        fieldnames = ['participant_name', 'organization', 'year', 'count', 'gans']
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames, dialect='excel')
         writer.writeheader()
         for row in result:
@@ -94,8 +95,10 @@ def process_participants():
             if len(applications) > 0:
                 for application in applications:
                     if application['count'] > 0:
+                        application['participant_name'] = row['name']
+                        application['gans'] = row['gans']
                         writer.writerow(application)
-                        print(f"Company name {name} / Patent Application {application}")
+                        print(f"Patent Application {application}")
     with open('grants.csv', mode='w', newline='') as csv_file:
         fieldnames = ['organization', 'year', 'count']
         writer = csv.DictWriter(csv_file, fieldnames=fieldnames, dialect='excel')
