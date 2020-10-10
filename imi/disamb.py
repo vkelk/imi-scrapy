@@ -100,12 +100,13 @@ def process_participants():
         if len(applications) > 0:
             for application in applications:
                 if application['count'] > 0:
-                    df_apps.at[i, "participant_name"] = row['name']
-                    df_apps.at[i, "organization"] = application['organization']
-                    df_apps.at[i, "year"] = str(application['year'])
-                    df_apps.at[i, "count"] = str(application['count'])
-                    df_apps.at[i, "gans"] = ','.join([str(g) for g in row['gans']])
-                    i +=1
+                    for gun in row['gans']:
+                        df_apps.at[i, "gans"] = gun
+                        df_apps.at[i, "participant_name"] = row['name']
+                        df_apps.at[i, "organization"] = application['organization']
+                        df_apps.at[i, "year"] = str(application['year'])
+                        df_apps.at[i, "count"] = str(application['count'])
+                        i +=1
     print(df_apps)
     df_apps.to_csv('applications.csv', index=False)
     del df_apps
@@ -125,12 +126,13 @@ def process_participants():
         if len(grants) > 0:
             for grant in grants:
                 if grant['count'] > 0:
-                    df_grants.at[i, "participant_name"] = row['name']
-                    df_grants.at[i, "organization"] = grant['organization']
-                    df_grants.at[i, "year"] = str(grant['year'])
-                    df_grants.at[i, "count"] = str(grant['count'])
-                    df_grants.at[i, "gans"] = ','.join([str(g) for g in row['gans']])
-                    i +=1
+                    for gun in row['gans']:
+                        df_grants.at[i, "gans"] = gun
+                        df_grants.at[i, "participant_name"] = row['name']
+                        df_grants.at[i, "organization"] = grant['organization']
+                        df_grants.at[i, "year"] = str(grant['year'])
+                        df_grants.at[i, "count"] = str(grant['count'])
+                        i +=1
     print(df_grants)
     df_grants.to_csv('grants.csv', index=False)
 
