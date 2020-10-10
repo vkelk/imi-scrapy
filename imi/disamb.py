@@ -101,7 +101,7 @@ def process_participants():
             for application in applications:
                 if application['count'] > 0:
                     for gun in row['gans']:
-                        df_apps.at[i, "gans"] = gun
+                        df_apps.at[i, "gans"] = str(gun)
                         df_apps.at[i, "participant_name"] = row['name']
                         df_apps.at[i, "organization"] = application['organization']
                         df_apps.at[i, "year"] = str(application['year'])
@@ -127,7 +127,7 @@ def process_participants():
             for grant in grants:
                 if grant['count'] > 0:
                     for gun in row['gans']:
-                        df_grants.at[i, "gans"] = gun
+                        df_grants.at[i, "gans"] = str(gun)
                         df_grants.at[i, "participant_name"] = row['name']
                         df_grants.at[i, "organization"] = grant['organization']
                         df_grants.at[i, "year"] = str(grant['year'])
