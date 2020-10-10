@@ -103,7 +103,7 @@ def process_participants():
                     df_apps.at[i, "participant_name"] = row['name']
                     df_apps.at[i, "organization"] = application['organization']
                     df_apps.at[i, "year"] = str(application['year'])
-                    df_apps.at[i, "count"] = application['count']
+                    df_apps.at[i, "count"] = str(application['count'])
                     df_apps.at[i, "gans"] = ','.join([str(g) for g in row['gans']])
                     i +=1
     print(df_apps)
@@ -128,7 +128,7 @@ def process_participants():
                     df_grants.at[i, "participant_name"] = row['name']
                     df_grants.at[i, "organization"] = grant['organization']
                     df_grants.at[i, "year"] = str(grant['year'])
-                    df_grants.at[i, "count"] = grant['count']
+                    df_grants.at[i, "count"] = str(grant['count'])
                     df_grants.at[i, "gans"] = ','.join([str(g) for g in row['gans']])
                     i +=1
     print(df_grants)
@@ -136,7 +136,7 @@ def process_participants():
 
 
 def find_grants(company_name, cnx):
-    company_name = f"%{company_name}%"
+    company_name = f"{company_name}%"
     q = """
         SELECT ass.organization, DATE_PART('year', p.date)::INTEGER as year, count(p.id)
         FROM grants.assignee ass
@@ -164,7 +164,7 @@ def find_grants(company_name, cnx):
 
 
 def find_applications(company_name, cnx):
-    company_name = f"%{company_name}%"
+    company_name = f"{company_name}%"
     q = """
         SELECT ass.organization, DATE_PART('year', a.date_filed)::INTEGER as year, count(a.id)
         FROM applications.assignee ass
