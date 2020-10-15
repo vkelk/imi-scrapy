@@ -97,3 +97,5 @@ CREATE TABLE imi.participants (
 -- imi.participants foreign keys
 
 ALTER TABLE imi.participants ADD CONSTRAINT participants_fk FOREIGN KEY (gan) REFERENCES imi.projects(gan) ON UPDATE CASCADE ON DELETE CASCADE;
+
+ALTER TABLE imi.projects ADD leader_company varchar NULL;
