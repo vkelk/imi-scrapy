@@ -5,8 +5,8 @@ import re
 from sqlalchemy import or_
 
 from imi.models import Session, ImiTexts, Analysis, SentimentHarvard
-from .Generic_Parser import get_data
-from .Load_MasterDictionary import load_masterdictionary
+from Generic_Parser import get_data
+from Load_MasterDictionary import load_masterdictionary
 
 
 HIV4_DICTIONARY_FILE = 'HIV-4.csv'
