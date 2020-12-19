@@ -9,6 +9,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import exc as sqlaException
 from sqlalchemy.orm import sessionmaker, scoped_session
+from sqlalchemy.schema import CreateSchema
 
 
 DB_USER = os.environ.get('DB_USER_IMI', 'postgres')
@@ -46,6 +47,19 @@ try:
 except sqlaException.ProgrammingError as Exception:
     pass
 
+pg_dsn = "postgresql+psycopg2://{username}:{password}@{host}:5432/{database}".format(**pg_config)
+db_engine = create_engine(
+    pg_dsn,
+    connect_args={"application_name": 'factiva:' + str(__name__)},
+    pool_size=200,
+    pool_recycle=600,
+    max_overflow=0,
+    encoding='utf-8'
+    )
+try:
+    db_engine.execute(CreateSchema(pg_config['schema']))
+except sqlaException.ProgrammingError:
+    pass
 db_meta = MetaData(bind=db_engine, schema=pg_config['schema'])
 session_factory = sessionmaker(db_engine)
 Session = scoped_session(session_factory)
