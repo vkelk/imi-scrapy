@@ -23,9 +23,10 @@ def analyze_artices():
     articles = session.query(ImiTexts.gan, ImiTexts.text) \
         .outerjoin(Analysis, Analysis.gan == ImiTexts.gan)\
         .outerjoin(SentimentHarvard, SentimentHarvard.gan == ImiTexts.gan)\
-        .filter(or_(Analysis.gan.is_(None), SentimentHarvard.gan.is_(None))).all()
+        .filter(or_(Analysis.gan.is_(None), SentimentHarvard.gan.is_(None)))
+    print(articles)
     i = 0
-    for article in articles:
+    for article in articles.all():
         text = article.text.rstrip('None')
         # Loughran-McDonald
         analysed = session.query(Analysis).filter_by(gan=article.gan).first()
