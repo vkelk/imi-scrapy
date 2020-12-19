@@ -50,7 +50,7 @@ class ImiTexts(Base):
     __tablename__ = 'imi_texts'
     __table_args__ = {"schema": pg_config['schema']}
 
-    gan = Column(Integer, primary_key=True)
+    gan = Column(Integer, autoincrement=False, primary_key=True)
     text = Column(String)
 
 
@@ -58,7 +58,7 @@ class Analysis(Base):
     __tablename__ = 'analysis'
     __table_args__ = {"schema": pg_config['schema']}
 
-    gan = Column(Integer, primary_key=True)
+    gan = Column(Integer, autoincrement=False, primary_key=True)
     word_count = Column(Integer)
     positive = Column(Float)
     negative = Column(Float)
@@ -84,7 +84,7 @@ class SentimentHarvard(Base):
     __tablename__ = 'sentiment_harvard'
     __table_args__ = {"schema": pg_config['schema']}
 
-    gan = Column(Integer, primary_key=True)
+    gan = Column(Integer, autoincrement=False, primary_key=True)
     word_count = Column(Integer)
     positiv = Column(Float)
     negativ = Column(Float)
