@@ -24,7 +24,7 @@ def analyze_artices():
         .outerjoin(Analysis, Analysis.gan == ImiTexts.gan)\
         .outerjoin(SentimentHarvard, SentimentHarvard.gan == ImiTexts.gan)\
         .filter(or_(Analysis.gan.is_(None), SentimentHarvard.gan.is_(None)))
-    print(articles)
+    # print(articles)
     i = 0
     for article in articles.all():
         text = article.text.rstrip('None')
