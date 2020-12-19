@@ -45,12 +45,12 @@ try:
     conn.execute("create database {}".format(pg_config['database']))
     conn.close()
 except sqlaException.ProgrammingError as Exception:
-    pass
+    logger.info(f"Database {pg_config['database']} already exists")
 
 pg_dsn = "postgresql+psycopg2://{username}:{password}@{host}:5432/{database}".format(**pg_config)
 db_engine = create_engine(
     pg_dsn,
-    connect_args={"application_name": 'factiva:' + str(__name__)},
+    connect_args={"application_name": 'imi:' + str(__name__)},
     pool_size=200,
     pool_recycle=600,
     max_overflow=0,
@@ -59,7 +59,7 @@ db_engine = create_engine(
 try:
     db_engine.execute(CreateSchema(pg_config['schema']))
 except sqlaException.ProgrammingError:
-    pass
+    logger.info(f"Schema {pg_config['schema']} already exists")
 db_meta = MetaData(bind=db_engine, schema=pg_config['schema'])
 session_factory = sessionmaker(db_engine)
 Session = scoped_session(session_factory)

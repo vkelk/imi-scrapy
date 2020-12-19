@@ -28,20 +28,20 @@ def analyze_artices():
     for article in articles:
         text = article.text.rstrip('None')
         # Loughran-McDonald
-        analysed = session.query(Analysis).filter_by(id=article.gan).first()
+        analysed = session.query(Analysis).filter_by(gan=article.gan).first()
         if analysed is None:
-            logger.info('Analysing Loughran-McDonald for article id %s', article.gan)
+            logger.info('Analysing Loughran-McDonald for article gan %s', article.gan)
             lm_dict = get_data(text)
-            lm_dict['id'] = article.gan
+            lm_dict['gan'] = article.gan
             lm_dict.pop('doc_size')
             a = Analysis(**lm_dict)
             session.add(a)
         # Harvard IV-4
-        sentiment_harvard = session.query(SentimentHarvard).filter_by(article_id=article.gan).first()
+        sentiment_harvard = session.query(SentimentHarvard).filter_by(gan=article.gan).first()
         if sentiment_harvard is None:
-            logger.info('Analysing Harvard Inquirer Categories for article id %s', article.gan)
+            logger.info('Analysing Harvard Inquirer Categories for article gan %s', article.gan)
             hiv4_dict = analyze_harvard_iv4(text)
-            hiv4_dict['article_id'] = article.gan
+            hiv4_dict['gan'] = article.gan
             h = SentimentHarvard(**hiv4_dict)
             session.add(h)
         session.commit()
@@ -50,7 +50,7 @@ def analyze_artices():
 
 def analyze_harvard_iv4(text):
     COLUMNS = [
-        'article_id', 'word_count', 'positiv', 'negativ', 'pstv', 'affil', 'ngtv',
+        'gan', 'word_count', 'positiv', 'negativ', 'pstv', 'affil', 'ngtv',
         'hostile', 'strong', 'power', 'weak', 'submit', 'active', 'passive'
         ]
     vdictionary = {}
