@@ -88,7 +88,7 @@ def get_data(doc):
     total_syllables = 0
     word_length = 0
     COLUMNS = [
-        'id', 'doc_size', 'word_count', 'positive', 'negative', 'uncertainty', 'litigious', 'modal_weak',
+        'gan', 'doc_size', 'word_count', 'positive', 'negative', 'uncertainty', 'litigious', 'modal_weak',
         'modal_moderate', 'modal_strong', 'constraining', 'alphabetic', 'digits', 'numbers',
         'avg_syllables_per_word', 'avg_word_length', 'vocabulary'
         ]
