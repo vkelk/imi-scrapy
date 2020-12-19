@@ -3,11 +3,12 @@ import logging
 import os
 
 from sqlalchemy import (
-    create_engine, Column, inspect,
+    create_engine, Column, inspect, MetaData,
     Integer, DateTime, Float, String
 )
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import exc as sqlaException
+from sqlalchemy.orm import sessionmaker, scoped_session
 
 
 DB_USER = os.environ.get('DB_USER_IMI', 'postgres')
@@ -44,6 +45,10 @@ try:
     conn.close()
 except sqlaException.ProgrammingError as Exception:
     pass
+
+db_meta = MetaData(bind=db_engine, schema=pg_config['schema'])
+session_factory = sessionmaker(db_engine)
+Session = scoped_session(session_factory)
 
 
 class ImiTexts(Base):
