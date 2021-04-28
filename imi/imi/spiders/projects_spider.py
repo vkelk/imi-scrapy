@@ -56,7 +56,7 @@ class CallsSpider(CrawlSpider):
         i['project_manager'] = response.xpath('//div[@id="project-contacts"]/div/div[@class="field--item"]/div[@class="project-contact"][contains(strong, "Project Manager")]/text()').extract()
         i['url'] = response.url
         i['summary'] = remove_html_tags(response.xpath('//*[@id="project-body"]/div/*').extract()[0])
-        i['fundings'] = response.xpath('//article/div/div[2]/div[2]/div[4]/div[2]/div[2]/div/div/div[2]/div/div/table/tbody/*').extract()
+        i['fundings'] = response.xpath('//*[@id="collapse-project-1"]/div/div/table/tbody/*').extract()
         i['participants'] = response.xpath('//div[@class="project-participants-category"]/*').extract()
         logger.info('Got item %s', i)
         yield i
